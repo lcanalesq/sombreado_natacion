@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Sombreado de Programas</title>
+<meta name="theme-color" content="#0b3d5c">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Sombreado">
+<style>
+  :root {
+    --azul: #0b3d5c; --azul2: #135e8a; --agua: #e8f4fa; --texto: #13212b; --suave: #5b6f7c;
+    --borde: #d6e4ec; --ok: #1e8e4f; --warn: #b35c00; --err: #b3261e; --r: 14px;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--agua); color: var(--texto);
+    font: 16px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  header { background: var(--azul); color: #fff;
+    padding: calc(14px + env(safe-area-inset-top)) 18px 18px; }
+  header h1 { margin: 0; font-size: 20px; letter-spacing: .2px; }
+  header p { margin: 2px 0 0; opacity: .8; font-size: 14px; }
+  main { max-width: 560px; margin: 0 auto;
+    padding: 14px 14px calc(28px + env(safe-area-inset-bottom)); display: grid; gap: 12px; }
+  .card { background: #fff; border: 1px solid var(--borde); border-radius: var(--r); padding: 14px; }
+  .card h2 { font-size: 15px; margin: 0 0 8px; color: var(--azul); text-transform: uppercase; letter-spacing: .6px; }
+  #zona { display: block; border: 2px dashed var(--azul2); background: #f5fbfe; text-align: center;
+    padding: 26px 14px; border-radius: var(--r); cursor: pointer; transition: background .15s; }
+  #zona.over { background: #dff1fb; }
+  #zona .big { font-size: 19px; font-weight: 700; color: var(--azul); }
+  #zona .sub { color: var(--suave); font-size: 14px; margin-top: 4px; }
+  #zona input { display: none; }
+  .btn { appearance: none; border: 0; border-radius: 12px; padding: 13px 16px; font: inherit; font-weight: 650;
+    background: var(--azul); color: #fff; cursor: pointer; width: 100%; }
+  .btn.sec { background: #fff; color: var(--azul); border: 1.5px solid var(--azul); }
+  .btn.mini { width: auto; padding: 8px 12px; font-size: 14px; }
+  .btns { display: grid; gap: 8px; margin-top: 12px; }
+  .row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  .counts { display: flex; gap: 14px; font-size: 15px; }
+  .counts b { font-size: 18px; }
+  #listaEstado { font-size: 13px; margin-top: 6px; color: var(--suave); }
+  #listaEstado[data-tipo="ok"] { color: var(--ok); }
+  #listaEstado[data-tipo="warn"] { color: var(--warn); }
+  details summary { cursor: pointer; color: var(--azul2); font-size: 14px; margin-top: 8px; }
+  details ul { margin: 6px 0 0; padding-left: 20px; font-size: 14px; max-height: 220px; overflow: auto; }
+  .sw { display: inline-block; width: 22px; height: 14px; border-radius: 4px; flex: none; border: 1px solid #0001; }
+  .ley { list-style: none; padding: 0; margin: 0; display: grid; gap: 6px; font-size: 14px; }
+  .ley li, #resStats li { display: flex; align-items: center; gap: 10px; }
+  #resStats { list-style: none; padding: 0; margin: 10px 0 0; display: grid; gap: 6px; font-size: 15px; }
+  #resStats b { margin-left: auto; }
+  #resNombre { font-weight: 700; word-break: break-all; }
+  #resMeta, #resAviso { font-size: 13px; color: var(--suave); }
+  #resAviso { color: var(--warn); }
+  #error { background: #fdecea; color: var(--err); border-color: #f3c3bf; }
+  #progreso { text-align: center; }
+  .spin { width: 34px; height: 34px; border: 4px solid var(--borde); border-top-color: var(--azul2);
+    border-radius: 50%; margin: 4px auto 10px; animation: g 0.8s linear infinite; }
+  @keyframes g { to { transform: rotate(360deg); } }
+  form { display: grid; gap: 10px; margin-top: 10px; }
+  label { font-size: 13px; color: var(--suave); display: grid; gap: 4px; }
+  input[type=text], input[type=number], input[type=url] { font: inherit; padding: 10px 11px; border-radius: 10px;
+    border: 1px solid var(--borde); width: 100%; background: #fbfdfe; color: var(--texto); }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  #cfgOk { color: var(--ok); font-size: 14px; }
+  #tipIOS { background: #fff8e6; border-color: #f1dca4; font-size: 14px; }
+  footer { text-align: center; font-size: 12px; color: var(--suave); }
+</style>
+</head>
+<body>
+<header>
+  <h1>Sombreado de Programas</h1>
+  <p>Elige el PDF del programa y descarga la versión sombreada</p>
+</header>
+
+<main>
+  <div class="card" id="tipIOS" hidden>
+    Para instalarla en el iPhone: toca <b>Compartir</b> en Safari y luego <b>“Agregar a inicio”</b>.
+  </div>
+
+  <label id="zona">
+    <input id="archivo" type="file" accept="application/pdf,.pdf">
+    <div class="big">📄 Elegir PDF</div>
+    <div class="sub">El archivo se procesa en tu celular, no se sube a ningún servidor</div>
+  </label>
+
+  <div class="card" id="progreso" hidden>
+    <div class="spin"></div>
+    <div id="progresoTxt">Procesando…</div>
+  </div>
+
+  <div class="card" id="error" hidden></div>
+
+  <div class="card" id="resultado" hidden>
+    <h2>Listo</h2>
+    <div id="resNombre"></div>
+    <div id="resMeta"></div>
+    <ul id="resStats"></ul>
+    <div id="resAviso"></div>
+    <div class="btns">
+      <button class="btn" id="btnDescargar">⬇ Descargar PDF</button>
+      <button class="btn sec" id="btnCompartir" hidden>Compartir / Guardar en…</button>
+      <button class="btn sec" id="btnVer">Ver PDF</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="row">
+      <h2 style="margin:0">Listas de nadadores</h2>
+      <button class="btn sec mini" id="btnListas">↻ Actualizar</button>
+    </div>
+    <div class="counts" style="margin-top:8px">
+      <span><span class="sw" style="background:rgb(128,204,255)"></span> Celeste: <b id="cntCeleste">–</b></span>
+      <span><span class="sw" style="background:rgb(0,255,0)"></span> Verde: <b id="cntVerde">–</b></span>
+    </div>
+    <div id="listaEstado"></div>
+    <details><summary>Ver lista celeste (columna A)</summary><ul id="verCeleste"></ul></details>
+    <details><summary>Ver lista verde (columna B)</summary><ul id="verVerde"></ul></details>
+  </div>
+
+  <div class="card">
+    <h2>Colores</h2>
+    <ul class="ley">
+      <li><span class="sw" style="background:rgb(255,102,102)"></span><span id="leyPrincipal"></span></li>
+      <li><span class="sw" style="background:rgb(255,255,0)"></span><span id="leyClub1"></span></li>
+      <li><span class="sw" style="background:rgb(204,204,204)"></span><span id="leyClub2"></span></li>
+      <li><span class="sw" style="background:rgb(128,204,255)"></span>Nadadores de la columna A</li>
+      <li><span class="sw" style="background:rgb(0,255,0)"></span>Nadadores de la columna B</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <details>
+      <summary style="margin:0;font-weight:650">⚙ Ajustes</summary>
+      <form id="formCfg">
+        <label>Nombre principal (rojo)<input type="text" id="cfg_nombrePrincipal"></label>
+        <div class="grid2">
+          <label>Club principal (amarillo)<input type="text" id="cfg_clubPrincipal"></label>
+          <label>Otro club (gris)<input type="text" id="cfg_clubOtros"></label>
+        </div>
+        <div class="grid2">
+          <label>OFFSET (antes del club)<input type="number" id="cfg_offset" inputmode="numeric"></label>
+          <label>NOMBRE_EXTRA<input type="number" id="cfg_extra" inputmode="numeric"></label>
+        </div>
+        <label>URL de la hoja de Google (col. A celeste, col. B verde)<input type="url" id="cfg_sheetUrl"></label>
+        <div class="row">
+          <button class="btn mini" type="submit">Guardar</button>
+          <span id="cfgOk"></span>
+          <button class="btn sec mini" type="button" id="btnRestaurar">Restaurar</button>
+        </div>
+      </form>
+    </details>
+  </div>
+
+  <footer>Funciona sin internet una vez instalada · las listas se actualizan cuando hay conexión</footer>
+</main>
+
+<script type="module" src="app.js"></script>
+</body>
+</html>
